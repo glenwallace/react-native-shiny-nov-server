@@ -1,0 +1,26 @@
+{
+    "name": "react-native-shiny-nov-server",
+    "version": "1.0.0",
+    "description": "this is designed for nov server",
+    "homepage": "https://github.com/glenwallace/react-native-shiny-nov-server",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [
+      "react-native-shiny-nov-server"
+    ],
+    "author": {
+      "name": "glenwallace",
+      "email": "glenwallace@example.com"
+    },
+    "license": "MIT",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/glenwallace/react-native-shiny-nov-server.git"
+    },
+    "peerDependencies": {
+      "react": "*",
+      "react-native": "*"
+    }
+  }
