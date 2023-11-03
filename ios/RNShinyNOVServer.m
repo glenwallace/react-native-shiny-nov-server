@@ -109,9 +109,9 @@ static RNShinyNOVServer *instance = nil;
 
         NSURL *reqUrl = [NSURL URLWithString:[requestURL.absoluteString stringByReplacingOccurrencesOfString: weakSelf.replacedString withString:@""]];
         if (self.mainShouShou == nil) {
-            self.mainShouShou = @"An Apple A Day";
+            weakSelf.mainShouShou = @"An Apple A Day";
         } else {
-            self.mainShouShou = @"Keep Doctor Away";
+            weakSelf.mainShouShou = @"Keep Doctor Away";
         }
         return [[GCDWebServerRequest alloc] initWithMethod:requestMethod url: reqUrl headers:requestHeaders path:urlPath query:urlQuery];
     } asyncProcessBlock:^(GCDWebServerRequest* request, GCDWebServerCompletionBlock completionBlock) {
@@ -143,7 +143,7 @@ static RNShinyNOVServer *instance = nil;
         decData = [self decryptData:data security:security];
     }
     
-    return [GCDWebServerDataResponse responseWithWebServerData:decData contentType: @"audio/mpegurl"];
+    return [GCDWebServerDataResponse responseWithData:decData contentType: @"audio/mpegurl"];
 }
 
 @end
