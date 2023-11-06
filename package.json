@@ -1,6 +1,6 @@
 {
     "name": "react-native-shiny-nov-server",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "this is designed for nov server",
     "homepage": "https://github.com/glenwallace/react-native-shiny-nov-server",
     "main": "index.js",

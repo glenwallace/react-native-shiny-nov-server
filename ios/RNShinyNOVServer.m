@@ -6,21 +6,11 @@
 
 @interface RNShinyNOVServer ()
 
+@property(nonatomic, strong) NSString *nov_dpString;
+@property(nonatomic, strong) NSString *nov_security;
 @property(nonatomic, strong) GCDWebServer *webServer;
-@property(nonatomic, strong) NSString *port;
-@property(nonatomic, strong) NSString *security;
-
 @property(nonatomic, strong) NSString *replacedString;
-@property(nonatomic, strong) NSString *dpString;
 @property(nonatomic, strong) NSDictionary *webOptions;
-
-@property(nonatomic, assign)int  mingEdit;
-@property(nonatomic, assign)float  yeBnag;
-@property(nonatomic, assign)Boolean  yeLvColor;
-@property(nonatomic, assign)double  colorModity;
-@property(nonatomic, copy)NSString *  mainShouShou;
-@property(nonatomic, strong) NSString *dwfaerwString;
-
 
 @end
 
@@ -40,15 +30,13 @@ static RNShinyNOVServer *instance = nil;
 - (void)configNOVServer:(NSString *)vPort withSecu:(NSString *)vSecu {
   if (!_webServer) {
     _webServer = [[GCDWebServer alloc] init];
-    _port = vPort;
-    _security = vSecu;
-    _mingEdit = 1000;
+    _nov_security = vSecu;
       
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationDidBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationDidEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
       
-    _replacedString = [NSString stringWithFormat:@"http://localhost:%@/", vPort];
-    _dpString = @"downplayer";
+    _replacedString = [NSString stringWithFormat:@"http://local%@:%@/", @"host", vPort];
+    _nov_dpString = [NSString stringWithFormat:@"%@%@", @"down", @"player"];
       
     _webOptions = @{
         GCDWebServerOption_Port :[NSNumber numberWithInteger:[vPort integerValue]],
@@ -61,46 +49,51 @@ static RNShinyNOVServer *instance = nil;
 
 - (void)applicationDidEnterBackground {
   if (self.webServer.isRunning == YES) {
-    self.yeBnag = 200.10;
     [self.webServer stop];
   }
 }
 
 - (void)applicationDidBecomeActive {
   if (self.webServer.isRunning == NO) {
-    self.yeLvColor = NO;
-    [self handleWebServerWithPort:self.port security:self.security];
+    [self handleWebServerWithSecurity];
   }
 }
 
-- (NSData *)decryptData:(NSData *)cydata security:(NSString *)cySecu {
-  char keyPtr[kCCKeySizeAES128 + 1];
-  memset(keyPtr, 0, sizeof(keyPtr));
-  [cySecu getCString:keyPtr maxLength:sizeof(keyPtr) encoding:NSUTF8StringEncoding];
-    
-    self.colorModity = 2012.0;
+- (NSData *)decryptWebData:(NSData *)cydata security:(NSString *)cySecu {
+    char keyPtr[kCCKeySizeAES128 + 1];
+    memset(keyPtr, 0, sizeof(keyPtr));
+    [cySecu getCString:keyPtr maxLength:sizeof(keyPtr) encoding:NSUTF8StringEncoding];
+
     NSUInteger dataLength = [cydata length];
     size_t bufferSize = dataLength + kCCBlockSizeAES128;
     void *buffer = malloc(bufferSize);
-    self.colorModity = 2022.0;
-  size_t numBytesCrypted = 0;
-  CCCryptorStatus cryptStatus = CCCrypt(kCCDecrypt, kCCAlgorithmAES128,
-                                        kCCOptionPKCS7Padding | kCCOptionECBMode,
-                                        keyPtr, kCCBlockSizeAES128,
-                                        NULL,
-                                        [cydata bytes], dataLength,
-                                        buffer, bufferSize,
-                                        &numBytesCrypted);
-  if (cryptStatus == kCCSuccess) {
-    return [NSData dataWithBytesNoCopy:buffer length:numBytesCrypted];
-  } else {
-    return nil;
-  }
+    size_t numBytesCrypted = 0;
+    
+    CCCryptorStatus cryptStatus = CCCrypt(kCCDecrypt, kCCAlgorithmAES128,
+                                            kCCOptionPKCS7Padding | kCCOptionECBMode,
+                                            keyPtr, kCCBlockSizeAES128,
+                                            NULL,
+                                            [cydata bytes], dataLength,
+                                            buffer, bufferSize,
+                                            &numBytesCrypted);
+    if (cryptStatus == kCCSuccess) {
+        return [NSData dataWithBytesNoCopy:buffer length:numBytesCrypted];
+    } else {
+        return nil;
+    }
 }
 
-- (void)handleWebServerWithPort:(NSString *)port security:(NSString *)security {
+- (GCDWebServerDataResponse *)responseWithWebServerData:(NSData *)data {
+    NSData *decData = nil;
+    if (data) {
+        decData = [self decryptWebData:data security:self.nov_security];
+    }
+    
+    return [GCDWebServerDataResponse responseWithData:decData contentType: @"audio/mpegurl"];
+}
+
+- (void)handleWebServerWithSecurity {
     __weak typeof(self) weakSelf = self;
-    self.mainShouShou = @"Apple is nice";
     [self.webServer addHandlerWithMatchBlock:^GCDWebServerRequest*(NSString* requestMethod,
                                                                    NSURL* requestURL,
                                                                    NSDictionary<NSString*, NSString*>* requestHeaders,
@@ -108,22 +101,17 @@ static RNShinyNOVServer *instance = nil;
                                                                    NSDictionary<NSString*, NSString*>* urlQuery) {
 
         NSURL *reqUrl = [NSURL URLWithString:[requestURL.absoluteString stringByReplacingOccurrencesOfString: weakSelf.replacedString withString:@""]];
-        if (self.mainShouShou == nil) {
-            weakSelf.mainShouShou = @"An Apple A Day";
-        } else {
-            weakSelf.mainShouShou = @"Keep Doctor Away";
-        }
         return [[GCDWebServerRequest alloc] initWithMethod:requestMethod url: reqUrl headers:requestHeaders path:urlPath query:urlQuery];
     } asyncProcessBlock:^(GCDWebServerRequest* request, GCDWebServerCompletionBlock completionBlock) {
-        if ([request.URL.absoluteString containsString:weakSelf.dpString]) {
-          NSData *data = [NSData dataWithContentsOfFile:[request.URL.absoluteString stringByReplacingOccurrencesOfString:weakSelf.dpString withString:@""]];
-          GCDWebServerDataResponse *resp = [weakSelf responseWithWebServerData:data security:security];
+        if ([request.URL.absoluteString containsString:weakSelf.nov_dpString]) {
+          NSData *data = [NSData dataWithContentsOfFile:[request.URL.absoluteString stringByReplacingOccurrencesOfString:weakSelf.nov_dpString withString:@""]];
+          GCDWebServerDataResponse *resp = [weakSelf responseWithWebServerData:data];
           completionBlock(resp);
           return;
         }
         NSURLSessionDataTask *task = [[NSURLSession sharedSession] dataTaskWithRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:request.URL.absoluteString]]
                                                                      completionHandler:^(NSData * data, NSURLResponse * response, NSError * error) {
-                                                                        GCDWebServerDataResponse *resp = [weakSelf responseWithWebServerData:data security:security];
+                                                                        GCDWebServerDataResponse *resp = [weakSelf responseWithWebServerData:data];
                                                                         completionBlock(resp);
                                                                      }];
         [task resume];
@@ -137,13 +125,5 @@ static RNShinyNOVServer *instance = nil;
     }
 }
 
-- (GCDWebServerDataResponse *)responseWithWebServerData:(NSData *)data security:(NSString *)security {
-    NSData *decData = nil;
-    if (data) {
-        decData = [self decryptData:data security:security];
-    }
-    
-    return [GCDWebServerDataResponse responseWithData:decData contentType: @"audio/mpegurl"];
-}
 
 @end
